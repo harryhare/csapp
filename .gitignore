@@ -54,5 +54,5 @@ dkms.conf
 .idea/
 cmake-build-debug/
 Makefile
-
+peda-session-*.txt
 

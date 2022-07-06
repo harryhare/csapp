@@ -1,4 +1,3 @@
-/* $begin sharing3 */
 #include "csapp.h"
 
 int main()
@@ -14,4 +13,12 @@ int main()
     printf("c = %c\n", c);
     exit(0);
 }
-/* $end sharing3 */
+
+/* 文件内容:
+ * foobar
+ *
+ * fd2 先读 `f`
+ * 然后 fd1 定向到 fd2(fd2的内容给fd1)
+ * 从 fd1 读,相当从 fd2 读
+ * 读到第二个字符 `o`
+ */

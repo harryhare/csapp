@@ -1,0 +1,3 @@
+## clion
+Build -> Clean
+

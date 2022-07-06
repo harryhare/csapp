@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
     errno = 0;
     while ((dep = readdir(streamp)) != NULL) { 
-        printf("Found file: %s\n", dep->d_name); 
+        printf("Found file: %s\n", dep->d_name); // `.` && `..` include
     } 
     if (errno != 0)
         unix_error("readdir error");
