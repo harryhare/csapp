@@ -11,4 +11,6 @@ add_library(common common/csapp.c)
 link_libraries(common pthread)
 
 add_subdirectory(10_io)
+add_subdirectory(11_netp)
+add_subdirectory(12_concurrent)
 

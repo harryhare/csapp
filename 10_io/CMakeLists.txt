@@ -12,8 +12,8 @@ add_executable(openexamples.o openexamples.c)
 add_subdirectory(test-readlineb)
 
 
-add_executable(p.10.7.o p.10.7.c)
-add_executable(p.10.8.o p.10.8.c)
-add_executable(p.10.10.o p.10.10.c)
+add_executable(p.10.7.o hw/p.10.7.c)
+add_executable(p.10.8.o hw/p.10.8.c)
+add_executable(p.10.10.o hw/p.10.10.c)
 
 
