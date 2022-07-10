@@ -16,8 +16,8 @@ int read_count = 0;
 void reader(void) {
     while (1) {
         P(&r);
-        P(&m_r_counter);
-        V(&r);
+        P(&m_r_counter);//
+        V(&r);  // 这句和上面那句颠倒好像也行
         read_count++;
         if (read_count == 1)
             P(&w);
