@@ -3,13 +3,37 @@
 #include <pthread.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <malloc.h>
 
+char *copy_charp(char *p) {
+    int str_len = strlen(p);
+    char *r = malloc(sizeof(char) * (str_len + 1));
+    memcpy(r, p, str_len);
+    r[str_len] = 0;
+    return r;
+}
+
+char **copy_charpp(char **p) {
+    char **r = NULL;
+    int n = 0;
+    for (n = 0; p[n] != NULL; n++);
+
+    r = (char **) malloc((n + 1) * sizeof(char *));
+    r[n] = NULL;
+    for (int i = 0; i < n; i++) {
+        r[i] = copy_charp(p[i]);
+    }
+    return r;
+}
 
 struct hostent *gethostbyname_ts(struct hostent *h, const char *name) {
     static pthread_mutex_t m;
     pthread_mutex_lock(&m);
     struct hostent *t = gethostbyname(name);
     memcpy(h, t, sizeof(struct hostent));
+    h->h_name = copy_charp(t->h_name);
+    h->h_aliases = copy_charpp(t->h_aliases);
+    h->h_addr_list = copy_charpp(t->h_addr_list);
     pthread_mutex_unlock(&m);
     return h;
 }
