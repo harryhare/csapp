@@ -142,4 +142,5 @@ void check_clients(pool *p) {
 /*
  * I don't understand this question
  * this code will kick off inactive client after 60 seconds no action
+ * use `nc localhost 8080` to test
  * */
