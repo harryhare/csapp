@@ -12,6 +12,7 @@ typedef struct { /* Represents a pool of connected descriptors */ //line:conc:ec
     int maxi;         /* Highwater index into client array */
     int clientfd[FD_SETSIZE];    /* Set of active descriptors */
     rio_t clientrio[FD_SETSIZE]; /* Set of active read buffers */
+    time_t last_response_time[FD_SETSIZE];
 } pool; //line:conc:echoservers:endpool
 /* $end echoserversmain */
 void init_pool(int listenfd, pool *p);
@@ -88,6 +89,8 @@ void add_client(int connfd, pool *p) {
                 p->maxfd = connfd; //line:conc:echoservers:endmaxfd
             if (i > p->maxi)       //line:conc:echoservers:beginmaxi
                 p->maxi = i;       //line:conc:echoservers:endmaxi
+
+            p->last_response_time[i] = time(NULL);
             break;
         }
     if (i == FD_SETSIZE) /* Couldn't find an empty slot */
@@ -100,23 +103,33 @@ void check_clients(pool *p) {
     int i, connfd, n;
     char buf[MAXLINE];
     rio_t rio;
-
+    time_t now = time(NULL);
     for (i = 0; (i <= p->maxi) && (p->nready > 0); i++) {
         connfd = p->clientfd[i];
         rio = p->clientrio[i];
 
         /* If the descriptor is ready, echo a text line from it */
-        if ((connfd > 0) && (FD_ISSET(connfd, &p->ready_set))) {
+        if ((connfd < 0)) {
+            continue;
+        }
+        if ((FD_ISSET(connfd, &p->ready_set))) {
             p->nready--;
             if ((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) {
                 byte_cnt += n; //line:conc:echoservers:beginecho
                 printf("Server received %d (%d total) bytes on fd %d\n",
                        n, byte_cnt, connfd);
                 Rio_writen(connfd, buf, n); //line:conc:echoservers:endecho
+                p->last_response_time[i] = now;
             }
-
                 /* EOF detected, remove descriptor from pool */
             else {
+                Close(connfd); //line:conc:echoservers:closeconnfd
+                FD_CLR(connfd, &p->read_set); //line:conc:echoservers:beginremove
+                p->clientfd[i] = -1;          //line:conc:echoservers:endremove
+            }
+        } else {
+            long since_last_response = now - p->last_response_time[i];
+            if (since_last_response > 60) {
                 Close(connfd); //line:conc:echoservers:closeconnfd
                 FD_CLR(connfd, &p->read_set); //line:conc:echoservers:beginremove
                 p->clientfd[i] = -1;          //line:conc:echoservers:endremove
@@ -126,3 +139,7 @@ void check_clients(pool *p) {
 }
 /* $end check_clients */
 
+/*
+ * I don't understand this question
+ * this code will kick off inactive client after 60 seconds no action
+ * */

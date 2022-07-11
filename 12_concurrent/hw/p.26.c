@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <malloc.h>
 
-char *copy_charp(char *p) {
+char *copy_charp(const char *p) {
     int str_len = strlen(p);
     char *r = malloc(sizeof(char) * (str_len + 1));
     memcpy(r, p, str_len);
@@ -13,7 +13,7 @@ char *copy_charp(char *p) {
     return r;
 }
 
-char **copy_charpp(char **p) {
+char **copy_charpp(const char **p) {
     char **r = NULL;
     int n = 0;
     for (n = 0; p[n] != NULL; n++);
