@@ -4,6 +4,9 @@
 void* sleep5(void*){
     sleep(5);
 }
+void* mygets(void*){
+
+}
 
 
 char *tfgets(char *s, int size, FILE *stream){
