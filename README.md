@@ -14,9 +14,9 @@ https://github.com/dingzk/csapp.git
 
 [book](pdf/Computer%20Systems.%20A%20Programmer’s%20Perspective%203rd%20Edition%20Global%20Edition%20(Randal%20E.%20Bryant,%20David%20R.%20O’Hallaron)%20.pdf)
 
-[instructors manual 3ed](pdf/csapp-3e-solutions.pdf)
+[instructors manual 3ed](pdf/computer-systems-a-programmers-perspective-instructors-solution-manual-3nd.pdf)
 
-[instructors manual 2ed](pdf/csapp-3e-solutions.pdf)
+[instructors manual 2ed](pdf/computer-systems-a-programmers-perspective-instructors-solution-manual-2ndnbsped.pdf)
 
 ## answers of homework
 
