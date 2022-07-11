@@ -1,29 +1,33 @@
-# csapp source code
+# csapp source code(WIP)
 
 ## about this repo
 source code of computer system(a programmer's perspective) , cmake version
+
+some of the homework code are done by me.
 
 most files of this repo copy from:
 
 https://github.com/dingzk/csapp.git 
 
-## answers of homewor
+
+## book and instructor manual
+
+[book](pdf/Computer%20Systems.%20A%20Programmer’s%20Perspective%203rd%20Edition%20Global%20Edition%20(Randal%20E.%20Bryant,%20David%20R.%20O’Hallaron)%20.pdf)
+
+[instructors manual 3ed](pdf/csapp-3e-solutions.pdf)
+
+[instructors manual 2ed](pdf/csapp-3e-solutions.pdf)
+
+## answers of homework
 
 * offical solutions is here, but I don't have access to the files:
 
   http://csapp.cs.cmu.edu/3e/imcode.html
 
-* instructors manual also contains part of solutions，but only 2ed can be found
-
-  https://dokumen.pub/qdownload/computer-systems-a-programmers-perspective-instructors-solution-manual-2ndnbsped.html
-  
-  3ed of instructors manual not accessable
-  
-  https://www.pearson.com/us/higher-education/product/Bryant-Instructor-s-Solutions-Manual-Download-only-for-Computer-Systems-A-Programmer-s-Perspective-3rd-Edition/9780134092966.html?tab=order
-  
   complain from other learners
   
   https://news.ycombinator.com/item?id=22286655
+
 
 * other solutions of homework:
 
