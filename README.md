@@ -20,6 +20,10 @@ https://github.com/dingzk/csapp.git
   3ed of instructors manual not accessable
   
   https://www.pearson.com/us/higher-education/product/Bryant-Instructor-s-Solutions-Manual-Download-only-for-Computer-Systems-A-Programmer-s-Perspective-3rd-Edition/9780134092966.html?tab=order
+  
+  complain from other learners
+  
+  https://news.ycombinator.com/item?id=22286655
 
 * other solutions of homework:
 
