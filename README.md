@@ -35,7 +35,7 @@ https://github.com/dingzk/csapp.git
   - https://github.com/DesmondoRay/CSAPP-3e
   - https://github.com/dingzk/csapp
   - https://github.com/mofaph/csapp
-  - https://dreamanddead.github.io/CSAPP-3e-Solutions/  （★★✩✩✩）
+  - https://dreamanddead.github.io/CSAPP-3e-Solutions/  （★★★✩✩）
 
 Although these solutions have many errors,  they are better than nothing.
 
