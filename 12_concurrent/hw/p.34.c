@@ -1,9 +1,5 @@
-/* 
- * vsum.c - A simple parallel sum program
- */
-/* $begin vsum */
+
 #include "csapp.h"
-#include <math.h>
 #include <assert.h>
 
 
@@ -19,7 +15,7 @@ void *sum(void *vargp);
 /* Global shared variables */
 double vector1[N][S];          /* Vector */
 double vector2[S][M];          /* Vector */
-double result[N][M]; /* Partial sum computed by each thread */
+double result[N][M];
 const int nthreads = 4;
 long nelems_per_thread = N / nthreads;  /* Region size for each thread */
 
@@ -27,10 +23,6 @@ int main(int argc, char **argv) {
     pthread_t tid[MAXTHREADS];
     int myid[MAXTHREADS];
 
-
-
-
-    /* $begin psum */
     assert(N % nthreads == 0);
     nelems_per_thread = N / nthreads;
 
@@ -56,7 +48,7 @@ int main(int argc, char **argv) {
     }
 
 
-    /* Check final answer */
+    /* Print final answer */
     printf("result:\n");
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < M; j++) {
@@ -67,12 +59,9 @@ int main(int argc, char **argv) {
 
     exit(0);
 }
-/* $end psum */
 
-/* Thread routine */
-/* $begin psum-thread */
 void *sum(void *vargp) {
-    int myid = *((int *) vargp);             /* Extract the thread ID */
+    int myid = *((int *) vargp);
     long start_row = myid * nelems_per_thread;  /* Start element index */
     long end_row = start_row + nelems_per_thread;   /* End element index */
     for (int i = start_row; i < end_row; i++) {
@@ -86,5 +75,5 @@ void *sum(void *vargp) {
     }
     return NULL;
 }
-/* $end psum-thread */
+
 
