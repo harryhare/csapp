@@ -929,7 +929,7 @@ int open_listenfd(char *port) {
         fprintf(stderr, "getaddrinfo failed (port %s): %s\n", port, gai_strerror(rc));
         return -2;
     }
-
+    
     /* Walk the list for one that we can bind to */
     for (p = listp; p; p = p->ai_next) {
         /* Create a socket descriptor */
