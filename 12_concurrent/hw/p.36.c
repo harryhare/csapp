@@ -1,48 +1,141 @@
 /* $begin tinymain */
 /*
- * tiny.c - A simple, iterative HTTP/1.0 Web server that uses the 
+ * tiny.c - A simple, iterative HTTP/1.0 Web server that uses the
  *     GET method to serve static and dynamic content.
  */
-#include <assert.h>
 #include "csapp.h"
 
 void doit(int fd);
 
-void read_requesthdrs(rio_t *rp, char *headers, int *header_len);
-
-void get_filetype(char *filename, char *filetype);
+void read_requesthdrs(rio_t *rp);
 
 int parse_uri(char *uri, char *filename, char *cgiargs);
 
-void serve_static(int fd, char *filename, int filesize, const char *echo_headers);
+void serve_static(int fd, char *filename, int filesize);
 
-void serve_dynamic(int fd, char *filename, char *cgiargs, const char *echo_headers);
+void get_filetype(char *filename, char *filetype);
+
+void serve_dynamic(int fd, char *filename, char *cgiargs);
 
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 
+
+typedef struct { /* Represents a pool of connected descriptors */ //line:conc:echoservers:beginpool
+    int maxfd;        /* Largest descriptor in read_set */
+    fd_set read_set;  /* Set of all active descriptors */
+    fd_set ready_set; /* Subset of descriptors ready for reading  */
+    int nready;       /* Number of ready descriptors from select */
+    int maxi;         /* Highwater index into client array */
+    int clientfd[FD_SETSIZE];    /* Set of active descriptors */
+    rio_t clientrio[FD_SETSIZE]; /* Set of active read buffers */
+} pool; //line:conc:echoservers:endpool
+/* $end echoserversmain */
+void init_pool(int listenfd, pool *p);
+
+void add_client(int connfd, pool *p);
+
+void check_clients(pool *p);
+
+/* $begin echoserversmain */
+
+int byte_cnt = 0; /* Counts total bytes received by server */
 
 int main(int argc, char **argv) {
     int listenfd, connfd;
     char hostname[MAXLINE], port[MAXLINE];
     socklen_t clientlen;
     struct sockaddr_storage clientaddr;
+    static pool pool;
 
     /* Check command line args */
     if (argc != 2) {
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
         exit(1);
     }
+
     listenfd = Open_listenfd(argv[1]);
+    init_pool(listenfd, &pool); //line:conc:echoservers:initpool
+
     while (1) {
-        clientlen = sizeof(clientaddr);
-        connfd = Accept(listenfd, (SA *) &clientaddr, &clientlen); //line:netp:tiny:accept
-        Getnameinfo((SA *) &clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
-        printf("Accepted connection from (%s, %s)\n", hostname, port);
-        doit(connfd);                                             //line:netp:tiny:doit
-        Close(connfd);                                            //line:netp:tiny:close
+        pool.ready_set = pool.read_set;
+        pool.nready = Select(pool.maxfd + 1, &pool.ready_set, NULL, NULL, NULL);
+
+        if (FD_ISSET(listenfd, &pool.ready_set)) {
+            clientlen = sizeof(clientaddr);
+            connfd = Accept(listenfd, (SA *) &clientaddr, &clientlen); //line:netp:tiny:accept
+            Getnameinfo((SA *) &clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
+            printf("Accepted connection from (%s, %s)\n", hostname, port);
+            add_client(connfd, &pool);
+        }
+        check_clients(&pool);
     }
 }
 /* $end tinymain */
+
+
+/* $begin init_pool */
+void init_pool(int listenfd, pool *p) {
+    /* Initially, there are no connected descriptors */
+    int i;
+    p->maxi = -1;                   //line:conc:echoservers:beginempty
+    for (i = 0; i < FD_SETSIZE; i++)
+        p->clientfd[i] = -1;        //line:conc:echoservers:endempty
+
+    /* Initially, listenfd is only member of select read set */
+    p->maxfd = listenfd;            //line:conc:echoservers:begininit
+    FD_ZERO(&p->read_set);
+    FD_SET(listenfd, &p->read_set); //line:conc:echoservers:endinit
+}
+/* $end init_pool */
+
+/* $begin add_client */
+void add_client(int connfd, pool *p) {
+    int i;
+    p->nready--;
+    for (i = 0; i < FD_SETSIZE; i++)  /* Find an available slot */
+        if (p->clientfd[i] < 0) {
+            /* Add connected descriptor to the pool */
+            p->clientfd[i] = connfd;                 //line:conc:echoservers:beginaddclient
+            Rio_readinitb(&p->clientrio[i], connfd); //line:conc:echoservers:endaddclient
+
+            /* Add the descriptor to descriptor set */
+            FD_SET(connfd, &p->read_set); //line:conc:echoservers:addconnfd
+
+            /* Update max descriptor and pool highwater mark */
+            if (connfd > p->maxfd) //line:conc:echoservers:beginmaxfd
+                p->maxfd = connfd; //line:conc:echoservers:endmaxfd
+            if (i > p->maxi)       //line:conc:echoservers:beginmaxi
+                p->maxi = i;       //line:conc:echoservers:endmaxi
+            break;
+        }
+    if (i == FD_SETSIZE) /* Couldn't find an empty slot */
+        app_error("add_client error: Too many clients");
+}
+/* $end add_client */
+
+/* $begin check_clients */
+void check_clients(pool *p) {
+    int i, connfd, n;
+    char buf[MAXLINE];
+    rio_t rio;
+
+    for (i = 0; (i <= p->maxi) && (p->nready > 0); i++) {
+        connfd = p->clientfd[i];
+        rio = p->clientrio[i];
+
+        /* If the descriptor is ready, echo a text line from it */
+        if ((connfd > 0) && (FD_ISSET(connfd, &p->ready_set))) {
+            p->nready--;
+            doit(connfd);
+            Close(connfd);
+            FD_CLR(connfd, &p->read_set); //line:conc:echoservers:beginremove
+            p->clientfd[i] = -1;          //line:conc:echoservers:endremove
+        }
+    }
+}
+
+
+/* $end check_clients */
 
 /*
  * doit - handle one HTTP request/response transaction
@@ -66,10 +159,7 @@ void doit(int fd) {
                     "Tiny does not implement this method");
         return;
     }                                                    //line:netp:doit:endrequesterr
-    char headers[1024];
-    int headers_len = 0;
-    read_requesthdrs(&rio, headers, &headers_len);                              //line:netp:doit:readrequesthdrs
-    assert(headers_len < 1024);
+    read_requesthdrs(&rio);                              //line:netp:doit:readrequesthdrs
 
     /* Parse URI from GET request */
     is_static = parse_uri(uri, filename, cgiargs);       //line:netp:doit:staticcheck
@@ -85,14 +175,14 @@ void doit(int fd) {
                         "Tiny couldn't read the file");
             return;
         }
-        serve_static(fd, filename, sbuf.st_size, headers);        //line:netp:doit:servestatic
+        serve_static(fd, filename, sbuf.st_size);        //line:netp:doit:servestatic
     } else { /* Serve dynamic content */
         if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) { //line:netp:doit:executable
             clienterror(fd, filename, "403", "Forbidden",
                         "Tiny couldn't run the CGI program");
             return;
         }
-        serve_dynamic(fd, filename, cgiargs, headers);            //line:netp:doit:servedynamic
+        serve_dynamic(fd, filename, cgiargs);            //line:netp:doit:servedynamic
     }
 }
 /* $end doit */
@@ -101,20 +191,15 @@ void doit(int fd) {
  * read_requesthdrs - read HTTP request headers
  */
 /* $begin read_requesthdrs */
-void read_requesthdrs(rio_t *rp, char *header, int *header_len) {
+void read_requesthdrs(rio_t *rp) {
     char buf[MAXLINE];
-    header_len = 0;
+
     Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
-    strcpy(header + *header_len, buf);
-    *header_len += strlen(buf);
     while (strcmp(buf, "\r\n")) {          //line:netp:readhdrs:checkterm
         Rio_readlineb(rp, buf, MAXLINE);
-        strcpy(header + *header_len, buf);
-        *header_len += strlen(buf);
         printf("%s", buf);
     }
-
     return;
 }
 /* $end read_requesthdrs */
@@ -150,10 +235,10 @@ int parse_uri(char *uri, char *filename, char *cgiargs) {
 /* $end parse_uri */
 
 /*
- * serve_static - copy a file back to the client 
+ * serve_static - copy a file back to the client
  */
 /* $begin serve_static */
-void serve_static(int fd, char *filename, int filesize, const char *echo_headers) {
+void serve_static(int fd, char *filename, int filesize) {
     int srcfd;
     char *srcp, filetype[MAXLINE], buf[MAXBUF];
 
@@ -161,7 +246,6 @@ void serve_static(int fd, char *filename, int filesize, const char *echo_headers
     get_filetype(filename, filetype);       //line:netp:servestatic:getfiletype
     sprintf(buf, "HTTP/1.0 200 OK\r\n");    //line:netp:servestatic:beginserve
     sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);
-    strcat(buf, echo_headers);
     sprintf(buf, "%sConnection: close\r\n", buf);
     sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
     sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
@@ -198,12 +282,11 @@ void get_filetype(char *filename, char *filetype) {
  * serve_dynamic - run a CGI program on behalf of the client
  */
 /* $begin serve_dynamic */
-void serve_dynamic(int fd, char *filename, char *cgiargs, const char *echo_headers) {
+void serve_dynamic(int fd, char *filename, char *cgiargs) {
     char buf[MAXLINE], *emptylist[] = {NULL};
 
     /* Return first part of HTTP response */
     sprintf(buf, "HTTP/1.0 200 OK\r\n");
-    strcat(buf, echo_headers);
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Server: Tiny Web Server\r\n");
     Rio_writen(fd, buf, strlen(buf));
