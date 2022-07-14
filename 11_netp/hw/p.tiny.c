@@ -31,6 +31,11 @@ void sigchld_handler(int sig) //line:conc:echoserverp:handlerstart
     while (waitpid(-1, 0, WNOHANG) > 0);
     return;
 } //line:conc:echoserverp:handlerend
+void sigpipe_handler(int sig) //line:conc:echoserverp:handlerstart
+{
+    while (waitpid(-1, 0, WNOHANG) > 0);
+    return;
+} //line:conc:echoserverp:handlerend
 
 
 int main(int argc, char **argv) {
@@ -46,6 +51,7 @@ int main(int argc, char **argv) {
     }
 
     Signal(SIGCHLD, sigchld_handler);
+    Signal(SIGPIPE, sigchld_handler);
 
     listenfd = Open_listenfd(argv[1]);
     while (1) {
@@ -209,9 +215,12 @@ void serve_static(int fd, char *filename, int filesize, const char *echo_headers
     sprintf(buf, "%sConnection: close\r\n", buf);
     sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
     sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
-    Rio_writen(fd, buf, strlen(buf));       //line:netp:servestatic:endserve
+    int r=rio_writen(fd, buf, strlen(buf));       //line:netp:servestatic:endserve
     printf("Response headers:\n");
     printf("%s", buf);
+    if(r<=0){
+        return;
+    }
 
     if (method == HEAD) {
         return;
@@ -225,7 +234,10 @@ void serve_static(int fd, char *filename, int filesize, const char *echo_headers
     char *bb = malloc(filesize);
     int n = 0;
     while ((n = Rio_readn(srcfd, bb, filesize)) != 0) {
-        Rio_writen(fd, bb, n);
+        int r=rio_writen(fd, bb, n);
+        if(r<=0){
+            return;
+        }
     }
     free(bb);
     Close(srcfd);
@@ -259,12 +271,18 @@ void serve_dynamic(int fd, char *filename, char *cgiargs, const char *echo_heade
 
     /* Return first part of HTTP response */
     sprintf(buf, "HTTP/1.0 200 OK\r\n");
-    Rio_writen(fd, buf, strlen(buf));
+    int r=rio_writen(fd, buf, strlen(buf));
     printf("%s", buf);
+    if(r<=0){
+        return;
+    }
     sprintf(buf, "Server: Tiny Web Server\r\n");
     strcat(buf, echo_headers);
-    Rio_writen(fd, buf, strlen(buf));
+    r=rio_writen(fd, buf, strlen(buf));
     printf("%s", buf);
+    if(r<=0){
+        return;
+    }
     if (method == HEAD) {
         return;
     }
@@ -294,11 +312,23 @@ void clienterror(int fd, char *cause, char *errnum,
 
     /* Print the HTTP response */
     sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
-    Rio_writen(fd, buf, strlen(buf));
+    int r=rio_writen(fd, buf, strlen(buf));
+    if(r<=0){
+        return;
+    }
     sprintf(buf, "Content-type: text/html\r\n");
-    Rio_writen(fd, buf, strlen(buf));
+    r=rio_writen(fd, buf, strlen(buf));
+    if(r<=0){
+        return;
+    }
     sprintf(buf, "Content-length: %d\r\n\r\n", (int) strlen(body));
-    Rio_writen(fd, buf, strlen(buf));
-    Rio_writen(fd, body, strlen(body));
+    r=rio_writen(fd, buf, strlen(buf));
+    if(r<=0){
+        return;
+    }
+    r=rio_writen(fd, body, strlen(body));
+    if(r<=0){
+        return;
+    }
 }
 /* $end clienterror */
