@@ -38,6 +38,7 @@ void sigpipe_handler(int sig) //line:conc:echoserverp:handlerstart
 } //line:conc:echoserverp:handlerend
 
 
+
 int main(int argc, char **argv) {
     int listenfd, connfd;
     char hostname[MAXLINE], port[MAXLINE];
@@ -332,3 +333,6 @@ void clienterror(int fd, char *cause, char *errnum,
     }
 }
 /* $end clienterror */
+/* test:
+ * curl 'http://localhost:8080/cgi-bin/adder' -X POST --data-raw 'a=2&b=3' -v
+ */
