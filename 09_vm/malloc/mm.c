@@ -305,7 +305,7 @@ static void *find_fit(size_t asize)
 {
     /* $end mmfirstfit */
 
-#ifdef NEXT_FIT 
+#ifdef NEXT_FIT
     /* Next fit search */
     char *oldrover = rover;
 

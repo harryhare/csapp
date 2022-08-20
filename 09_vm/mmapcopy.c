@@ -4,8 +4,7 @@
 /* 
  * mmapcopy - uses mmap to copy file fd to stdout 
  */
-void mmapcopy(int fd, int size) 
-{
+void mmapcopy(int fd, int size) {
     char *bufp; /* ptr to memory-mapped VM area */
 
     bufp = Mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -14,15 +13,14 @@ void mmapcopy(int fd, int size)
 }
 
 /* mmapcopy driver */
-int main(int argc, char **argv) 
-{
+int main(int argc, char **argv) {
     struct stat stat;
     int fd;
 
     /* Check for required command-line argument */
     if (argc != 2) {
-	printf("usage: %s <filename>\n", argv[0]);
-	exit(0);
+        printf("usage: %s <filename>\n", argv[0]);
+        exit(0);
     }
 
     /* Copy the input argument to stdout */
