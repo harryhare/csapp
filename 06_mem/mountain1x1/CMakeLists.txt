@@ -1,0 +1,1 @@
+add_executable(mountain1x1 mountain.c fcyc2.c clock.c)
