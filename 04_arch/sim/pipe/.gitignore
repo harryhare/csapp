@@ -1,0 +1,6 @@
+# binary
+psim
+
+# code generate
+pipe-std.c
+*.c

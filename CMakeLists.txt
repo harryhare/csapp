@@ -10,6 +10,7 @@ add_library(common common/csapp.c)
 
 link_libraries(common pthread)
 
+add_subdirectory(04_arch)
 add_subdirectory(06_mem)
 add_subdirectory(07_link)
 add_subdirectory(08_ecf)

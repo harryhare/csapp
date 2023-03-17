@@ -1,3 +1,13 @@
 # binary files
 yas
 yis
+hcl2c
+
+## lex generate
+hcl.tab.c
+hcl.tab.h
+
+yas-grammar.c
+
+## y generate
+lex.yy.c
