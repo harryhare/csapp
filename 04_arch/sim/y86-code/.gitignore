@@ -1,2 +1,8 @@
 # y86-64 object file
 *.yo
+
+
+# middle file
+*.seq
+*.seq+
+*.pipe

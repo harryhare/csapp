@@ -14,6 +14,8 @@ PIPEFILES = asum.pipe asumr.pipe cjr.pipe j-cc.pipe poptest.pipe pushquestion.pi
 
 SEQFILES = asum.seq asumr.seq cjr.seq j-cc.seq poptest.seq pushquestion.seq pushtest.seq prog1.seq prog2.seq prog3.seq prog4.seq prog5.seq prog6.seq prog7.seq prog8.seq ret-hazard.seq
 
+SEQIFILES = asum.seq asumi.seq asumr.seq cjr.seq j-cc.seq poptest.seq pushquestion.seq pushtest.seq prog1.seq prog2.seq prog3.seq prog4.seq prog5.seq prog6.seq prog7.seq prog8.seq ret-hazard.seq
+
 SEQ+FILES = asum.seq+ asumr.seq+ cjr.seq+ j-cc.seq+ poptest.seq+ pushquestion.seq+ pushtest.seq+ prog1.seq+ prog2.seq+ prog3.seq+ prog4.seq+ prog5.seq+ prog6.seq+ prog7.seq+ prog8.seq+ ret-hazard.seq+
 
 .SUFFIXES:
@@ -28,6 +30,10 @@ testpsim: $(PIPEFILES)
 	rm $(PIPEFILES)
 
 testssim: $(SEQFILES)
+	grep "ISA Check" *.seq
+	rm $(SEQFILES)
+
+testssimi: $(SEQIFILES)
 	grep "ISA Check" *.seq
 	rm $(SEQFILES)
 
