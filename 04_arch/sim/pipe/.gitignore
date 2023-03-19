@@ -2,5 +2,6 @@
 psim
 
 # code generate
-pipe-std.c
 *.c
+ldriver.yo
+ldriver.ys
