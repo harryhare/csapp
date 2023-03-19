@@ -6,7 +6,7 @@
 
 ## Your task is to modify the design so that conditional branches are
 ## predicted as being taken when backward and not-taken when forward
-## The code here is nearly identical to that for the normal pipeline.  
+## The code here is nearly identical to that for the normal pipeline.
 ## Comments starting with keyword "BBTFNT" have been added at places
 ## relevant to the exercise.
 
@@ -139,7 +139,8 @@ wordsig W_valM  'mem_wb_curr->valm'	# Memory M value
 ## What address should instruction be fetched at
 word f_pc = [
 	# Mispredicted branch.  Fetch at incremented PC
-	M_icode == IJXX && !M_Cnd : M_valA;
+	M_icode == IJXX && M_ifun != UNCOND && (M_valE < M_valA) && !M_Cnd: M_valA;
+	M_icode == IJXX && M_ifun != UNCOND && (M_valE >= M_valA) && M_Cnd: M_valE;
 	# Completion of RET instruction
 	W_icode == IRET : W_valM;
 	# Default: Use predicted value of PC
@@ -159,7 +160,7 @@ word f_ifun = [
 ];
 
 # Is instruction valid?
-bool instr_valid = f_icode in 
+bool instr_valid = f_icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ };
 
@@ -173,7 +174,7 @@ word f_stat = [
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ };
 
 # Does fetched instruction require a constant word?
@@ -183,7 +184,9 @@ bool need_valC =
 # Predict next value of PC
 word f_predPC = [
 	# BBTFNT: This is where you'll change the branch prediction rule
-	f_icode in { IJXX, ICALL } : f_valC;
+    f_icode == ICALL : f_valC;
+    f_icode == IJXX && f_ifun == UNCOND : f_valC;
+    f_icode == IJXX && f_valC < f_valP: f_valC;
 	1 : f_valP;
 ];
 
@@ -247,7 +250,7 @@ word d_valB = [
 ## Select input A to ALU
 word aluA = [
 	E_icode in { IRRMOVQ, IOPQ } : E_valA;
-	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ } : E_valC;
+	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX } : E_valC;
 	E_icode in { ICALL, IPUSHQ } : -8;
 	E_icode in { IRET, IPOPQ } : 8;
 	# Other instructions don't need ALU
@@ -255,9 +258,9 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		     IPUSHQ, IRET, IPOPQ } : E_valB;
-	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
+	E_icode in { IRRMOVQ, IIRMOVQ, IJXX } : 0;
 	# Other instructions don't need ALU
 ];
 
@@ -336,15 +339,15 @@ bool F_stall =
 
 # Should I stall or inject a bubble into Pipeline Register D?
 # At most one of these can be true.
-bool D_stall = 
+bool D_stall =
 	# Conditions for a load/use hazard
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB };
 
 bool D_bubble =
 	# Mispredicted branch
-	(E_icode == IJXX && !e_Cnd) ||
 	# BBTFNT: This condition will change
+	E_icode == IJXX && E_ifun !=UNCOND && ((E_valC < E_valA) && !e_Cnd || (E_valC >= E_valA) && e_Cnd)||
 	# Stalling at fetch while ret passes through pipeline
 	# but not condition for a load/use hazard
 	!(E_icode in { IMRMOVQ, IPOPQ } && E_dstM in { d_srcA, d_srcB }) &&
@@ -355,8 +358,8 @@ bool D_bubble =
 bool E_stall = 0;
 bool E_bubble =
 	# Mispredicted branch
-	(E_icode == IJXX && !e_Cnd) ||
 	# BBTFNT: This condition will change
+	(E_icode == IJXX && E_ifun !=UNCOND ) && ((E_valC < E_valA) && !e_Cnd|| (E_valC >= E_valA) && e_Cnd)||
 	# Conditions for a load/use hazard
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB};
