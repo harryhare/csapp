@@ -80,8 +80,10 @@ boolsig instr_valid 'instr_valid'    # Is fetched instruction valid?
 
 ##### Pipeline Register D ##########################################
 wordsig D_icode 'if_id_curr->icode'   # Instruction code
+wordsig D_ifun  'if_id_curr->ifun'
 wordsig D_rA 'if_id_curr->ra'	     # rA field from instruction
 wordsig D_rB 'if_id_curr->rb'	     # rB field from instruction
+wordsig D_valC 'if_id_curr->valc'
 wordsig D_valP 'if_id_curr->valp'     # Incremented PC
 
 ##### Intermediate Values in Decode Stage  #########################
@@ -139,7 +141,7 @@ wordsig W_valM  'mem_wb_curr->valm'	# Memory M value
 ## What address should instruction be fetched at
 word f_pc = [
 	# Mispredicted branch.  Fetch at incremented PC
-	M_icode == IJXX && !M_Cnd : M_valA;
+	M_icode == IJXX && M_ifun != UNCOND && M_Cnd : M_valA;
 	# Completion of RET instruction
 	W_icode == IRET : W_valM;
 	# Default: Use predicted value of PC
@@ -183,7 +185,7 @@ bool need_valC =
 # Predict next value of PC
 word f_predPC = [
 	# BNT: This is where you'll change the branch prediction rule
-	f_icode in { IJXX, ICALL } : f_valC;
+	f_icode == ICALL || (f_icode==IJXX && f_ifun==UNCOND) : f_valC;
 	1 : f_valP;
 ];
 
@@ -220,7 +222,9 @@ word d_dstM = [
 ## What should be the A value?
 ## Forward into decode stage for valA
 word d_valA = [
-	D_icode in { ICALL, IJXX } : D_valP; # Use incremented PC
+	D_icode == ICALL : D_valP; # Use incremented PC
+	D_icode == IJXX && D_ifun == UNCOND : D_valP;
+	D_icode == IJXX : D_valC;
 	d_srcA == e_dstE : e_valE;    # Forward valE from execute
 	d_srcA == M_dstM : m_valM;    # Forward valM from memory
 	d_srcA == M_dstE : M_valE;    # Forward valE from memory
@@ -343,7 +347,7 @@ bool D_stall =
 
 bool D_bubble =
 	# Mispredicted branch
-	(E_icode == IJXX && !e_Cnd) ||
+	(E_icode == IJXX && E_ifun != UNCOND && e_Cnd) ||
 	# Stalling at fetch while ret passes through pipeline
 	# but not condition for a load/use hazard
 	!(E_icode in { IMRMOVQ, IPOPQ } && E_dstM in { d_srcA, d_srcB }) &&
@@ -354,7 +358,7 @@ bool D_bubble =
 bool E_stall = 0;
 bool E_bubble =
 	# Mispredicted branch
-	(E_icode == IJXX && !e_Cnd) ||
+	(E_icode == IJXX && E_ifun != UNCOND && e_Cnd) ||
 	# Conditions for a load/use hazard
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB};

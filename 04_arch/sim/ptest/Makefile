@@ -14,6 +14,7 @@ test:
 	./jtest.pl -s $(SIM) $(TFLAGS)
 	./ctest.pl -s $(SIM) $(TFLAGS)
 	./htest.pl -s $(SIM) $(TFLAGS)
+	./etest.pl -s $(SIM) $(TFLAGS)
 
 clean:
 	rm -f *.o *~ *.yo *.ys
