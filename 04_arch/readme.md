@@ -1,4 +1,7 @@
 the `sim` is downloaded from the website
+http://csapp.cs.cmu.edu/3e/archlab-handout.tar (pdf instructions include)
+or
+http://csapp.cs.cmu.edu/3e/sim.tar (only source files)
 
 you may  encounter error when try to compile the files
 1. install depency

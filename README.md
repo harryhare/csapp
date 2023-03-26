@@ -31,11 +31,11 @@ https://github.com/dingzk/csapp.git
 
 * other solutions of homework:
   - https://github.com/Amano-Sei/MyCSAPPsolution
-  - https://github.com/ahmed-salah-ucf/computer-systems-CS-APP3e
+  - https://github.com/ahmeducf/computer-systems-CS-APP3e
   - https://github.com/DesmondoRay/CSAPP-3e
   - https://github.com/dingzk/csapp
   - https://github.com/mofaph/csapp
-  - https://dreamanddead.github.io/CSAPP-3e-Solutions/  （★★★✩✩）
+  - https://dreamanddead.github.io/CSAPP-3e-Solutions/
 
 Although these solutions have many errors,  they are better than nothing.
 
